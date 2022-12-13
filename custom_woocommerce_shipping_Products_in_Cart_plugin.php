@@ -36,27 +36,39 @@
             }
             
             public function calculate_shipping($package = array()) {
-                // Get the number of products in the cart
-                $num_products = WC()->cart->get_cart_contents_count();
-            
-                // Set the price of the shipping method based on the number of products in the cart
-                if ( $num_products <= 2 ) {
-                    $price = 5;
-                } elseif ( $num_products > 2 && $num_products <= 5 ) {
-                    $price = 10;
-                } else {
-                    $price = 15;
-                }
-            
-                $rate = array(
-                    'label' => $this->title,
-                    'cost' => $price,
-                    'calc_tax' => 'per_item'
-                );
-            
-                // Register the rate
-                $this->add_rate( $rate );
-            }      
+	    // Get the products in the cart
+	    $products = WC()->cart->get_cart_contents();
+	    // Get the state of shipping
+	    $state = WC()->customer->get_shipping_state();
+
+	    // Set the base price of the shipping method
+	    $price = 0;
+
+	    // Loop through each product in the cart
+	    foreach ( $products as $product ) {
+		// Get the product's category
+		$product_category = get_the_terms( $product['product_id'], 'product_cat' );
+		// Check if the product is in the "Clothing" category
+		if ( $product_category && $product_category[0]->slug == 'clothing' ) {
+		    // Add an additional $5 to the shipping cost for each product in the "Clothing" category
+		    $price += 5;
+		}
+		// Check if the shipping state is "California"
+		if ( $state == 'CA' ) {
+		    // Add an additional $10 to the shipping cost for orders being shipped to California
+		    $price += 10;
+		}
+	    }
+
+	    $rate = array(
+		'label' => $this->title,
+		'cost' => $price,
+		'calc_tax' => 'per_item'
+	    );
+
+	    // Register the rate
+	    $this->add_rate( $rate );
+	}    
             
             
             
